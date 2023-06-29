@@ -77,18 +77,18 @@ main {
   flex-direction: column;
   background-color: transparent;
   max-height: 700px;
-  width: auto;
-  max-width: 500px;
+  max-width: 260px;
+
   color: rgba(200, 200, 200, 0.9);
   font-size: 16px;
   border-width: 0;
   border-radius: 2px;
   border-image: url("borders/window_border.png") 8 repeat;
-  outline-width: 1px;
+  outline-width: 2px;
 	outline-offset: -1px;
 	outline-color: rgb(192, 192, 192);
 	outline-style: outset;
-box-shadow: 9px 9px 12px 6px rgba(0, 0, 0, 1);
+box-shadow: 12px 12px 18px 6px rgba(0, 0, 0, 1);
 
 }
 
