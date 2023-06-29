@@ -592,7 +592,7 @@ let eveui;
   <thead>
     <tr class="eveui_fit_header" data-eveui-itemid="${ship_id}">
       <td colspan="2">
-        <img src="${eveui_imageserver("types/" + ship_id + "/render?size=64")}" class="eveui_icon eveui_ship_icon" />
+        <img src="${eveui_imageserver("types/" + ship_id + "/render?size=512")}" class="eveui_icon eveui_ship_icon" />
       </td>
       <td>
         <div class="eveui_rowcontent">
@@ -677,7 +677,7 @@ let eveui;
   function format_item(item_id) {
     let item = cache_retrieve("/v3/universe/types/" + item_id);
     let html = `
-<img src="${eveui_imageserver("types/" + item_id + "/render?size=128")}" class="float_right" />
+<img src="${eveui_imageserver("types/" + item_id + "/icon?size=512")}"height="128" width="128" class="float_right" />
 ${item.name}
 <br />
 ${item.description}
@@ -744,29 +744,37 @@ ${item.description}
     let html = `
 <table>
   <tr>
-    <td colspan="2">
-      <img class="float_left" src="${eveui_imageserver(
-        "characters/" + char_id + "/portrait?size=128"
-      )}" height="128" width="128" />
+    <td>
+      <img class="float_left" src="${eveui_imageserver("characters/" + char_id + "/portrait?size=512"
+    )}" height="256" width="256" />
+    </td>
+  </tr>
+  <tr>
+    <td>
       ${character.name}
       <hr />
-      <img class="float_left" src="${eveui_imageserver(
-        "corporations/" + character.corporation_id + "/logo?size=128"
-      )}" height="96" width="96" />
+    </td>
+  </tr>
+  <tr>
+    <td>
       Member of
       <a href="corp:${character.corporation_id}">
         <eveui key="/v5/corporations/${character.corporation_id}" path="name">
           ${character.corporation_id}
         </eveui>
-      </a
+      </a>
     </td>
   </tr>
   <tr>
     <td>
-      Bio:
+      <img class="float_left" src="${eveui_imageserver("corporations/" + character.corporation_id + "/logo?size=256"
+      )}" height="128" width="128" />
+
     </td>
+  </tr>
+  <tr>
     <td>
-      ${character.description.replace(/<font[^>]+>/g, "<font>")}
+      Bio:&nbsp;${character.description.replace(/<font[^>]+>/g, "<font>")}
     </td>
   </tr>
 </table>`;
