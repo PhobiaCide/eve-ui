@@ -744,23 +744,23 @@ ${item.description}
     let html = `
 <table>
   <thead>
-    <td colspan="2">
+    <td colspan="4">
       ${character.name}
       <hr />
     </td>
   </thead>
   <tbody>
     <tr>
-      <td colspan="2">
+      <td colspan="4">
         <img src="${eveui_imageserver("characters/" + char_id + "/portrait?size=512")}" height="256" width="256" />
         <hr />
       </td>
     </tr>
     <tr>
-      <td>
-        <img class="float_left" src="${eveui_imageserver("corporations/" + character.corporation_id + "/logo?size=128")}" height="96" width="96" />
+      <td colspan="1">
+        <img  class="float_left" src="${eveui_imageserver("corporations/" + character.corporation_id + "/logo?size=128")}" height="96" width="96" />
       </td>
-      <td>
+      <td style="text-align:left;position:relative;top:32px;">
         Member of
         <a href="corp:${character.corporation_id}">
           <eveui key="/latest/corporations/${character.corporation_id}" path="name">
@@ -770,10 +770,10 @@ ${item.description}
       </td>
     </tr>
     <tr>
-      <td>
-        Bio:
+      <td colspan="1" style="text-align: right;">
+        Bio:&nbsp;
       </td>
-      <td>
+      <td style="text-align:left;">
         ${character.description.replace(/<font[^>]+>/g, "<font>")}
       </td>
     </tr>
