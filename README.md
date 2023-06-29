@@ -9,6 +9,10 @@ Basic usage example:
 <script src="eve-ui.min.js" defer></script>
 ```
 
+## Demo
+
+[Click here](https://phobiacide.github.io/eve-ui/) for a demo of this project in its current state.
+
 If you are using a strict CSP you may want to set `eveui_style=""` to prevent an error about inline styles, if you still want to use the default style you will need to link the CSS manually.
 
 https://quiescens.github.io/eve-ui/examples.html to see what it looks like by default, view source to see how it works.
