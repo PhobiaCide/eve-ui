@@ -812,7 +812,7 @@ ${item.description}
 <table>
   <tr>
     <td colspan="2">
-      <img class="float_left" src="${eveui_imageserver(
+      <img src="${eveui_imageserver(
         "corporations/" + corp_id + "/logo?size=256"
       )}" height="256" width="256" />
       ${corporation.name}
@@ -1046,7 +1046,8 @@ ${corporation.alliance_id}
           this.href.substring(this.href.indexOf(":") + 1);
         cache_request("/latest/universe/types/" + item_id).done(function () {
           selected_element.replaceWith(
-            `<span class="eveui_content eveui_item">${format_item(
+            `<span class="eveui_content eveui_item">
+            ${format_item(
               item_id
             )}</span>`
           );
@@ -1217,7 +1218,7 @@ ${corporation.alliance_id}
           }
         }
       })
-      .fail(function (xhr) {
+      .fail((xhr) => {
         // on a transient failed request, allow retry attempt on the same request after 10s
         if (xhr.status >= 500) {
           setTimeout(function () {
