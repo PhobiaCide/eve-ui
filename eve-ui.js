@@ -5,7 +5,7 @@ r: 0.0.2`;
 let eveui_accept_language;
 const eveui_preload_initial = 50;
 const eveui_preload_interval = 10;
-const eveui_mode = "multi_window"; //* expand_all, expand, multi_window, modal
+const eveui_mode = "modal"; //* expand_all, expand, multi_window, modal
 const eveui_allow_edit = true;
 const eveui_show_fitstats = true;
 const eveui_fit_selector = `[href^="fitting:"],[data-dna]`;
