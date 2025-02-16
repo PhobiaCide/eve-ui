@@ -1,0 +1,19 @@
+{
+  "name": "eve-ui-fork",
+  "version": "1.0.0",
+  "description": "NOTE: I am no longer actively working on this project. Consider using a fork or looking for another library.",
+  "main": "index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PhobiaCide/eve-ui.git"
+  },
+  "author": "PhobiaCide",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/PhobiaCide/eve-ui/issues"
+  },
+  "homepage": "https://github.com/PhobiaCide/eve-ui#readme"
+}

@@ -5,11 +5,11 @@
 
 @font-face {
   font-family: "fragma";
-  src: url("fonts/fragma-medium.ttf") format("truetype");
+  src: url("../../fonts/fragma-medium.ttf") format("truetype");
 }
 @font-face {
   font-family: "evesansneue-regular";
-  src: url("fonts/evesansneue-regular.ttf") format("truetype");
+  src: url("../../fonts/evesansneue-regular.ttf") format("truetype");
 }
 html {
   width: 100vw;
