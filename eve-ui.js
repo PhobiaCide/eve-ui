@@ -19,34 +19,20 @@ const eveui_imageserver = (image_ref) =>
 
 class Utility {
   static toTitleCase(str) {
-    return str.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/\b\w/g, char => char.toUpperCase());
+    return str
+      // Convert camelCase to space-separated words
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      // Convert all words to title case
+      .replace(/\b\w/g, (char) => char.toUpperCase());
   }
-
   static async getImgHref(id, size) {
-    try {
-      const response = await fetchData(eveui_esi_endpoint(`/universe/names/`), "POST", [id]);
-      console.log(response);
-    } catch (error) {
-      console.error("Error fetching image href:", error);
-    }
-  }
-
-  static formatNumber(num, units = "") {
-    if (isNaN(num)) return "n/a";
-
-    let suffix = "";
-    if (num >= 1_000_000_000) {
-      suffix = "B";
-      num /= 1_000_000_000;
-    } else if (num >= 1_000_000) {
-      suffix = "M";
-      num /= 1_000_000;
-    } else if (num >= 1_000) {
-      suffix = "K";
-      num /= 1_000;
-    }
-
-    return `${Number.isInteger(num) ? num.toFixed(0) : num.toFixed(2)} ${suffix} ${units}`.trim();
+    console.log(await ajax({
+      url: eveui_esi_endpoint(`/universe/names/`),
+      method: "POST",
+      payload: JSON.stringify([id]),
+      cache: true,
+      contentType: "application/json"
+    }));
   }
 }
 
@@ -86,12 +72,14 @@ let eveui;
       }
     }
   });
+
   document.addEventListener("click", function (e) {
     if (e.target.matches(".eveui_modal_overlay")) {
       document.querySelectorAll(".eveui_window").forEach(window => window.remove());
       e.target.remove();
     }
   });
+
   document.addEventListener("click", function (e) {
     if (e.target.matches(eveui_fit_selector)) {
       e.preventDefault();
@@ -118,6 +106,7 @@ let eveui;
       }
     }
   });
+
   document.addEventListener("click", function (e) {
     if (e.target.matches(eveui_item_selector)) {
       e.preventDefault();
@@ -143,6 +132,7 @@ let eveui;
       }
     }
   });
+
   document.addEventListener("click", function (e) {
     if (e.target.matches(eveui_char_selector)) {
       e.preventDefault();
@@ -168,6 +158,7 @@ let eveui;
       }
     }
   });
+
   document.addEventListener("click", function (e) {
     if (e.target.matches(eveui_corp_selector)) {
       e.preventDefault();
@@ -193,6 +184,7 @@ let eveui;
       }
     }
   });
+
   // info buttons, copy buttons, etc
   document.addEventListener("click", function (e) {
     if (e.target.matches(".eveui_minus_icon")) {
@@ -233,6 +225,7 @@ let eveui;
       });
     }
   });
+
   document.addEventListener("click", function (e) {
     if (e.target.matches(".eveui_plus_icon")) {
       e.preventDefault();
@@ -268,6 +261,7 @@ let eveui;
       });
     }
   });
+
   document.addEventListener("click", function (e) {
     if (e.target.matches(".eveui_edit_icon")) {
       e.preventDefault();
@@ -354,6 +348,7 @@ let eveui;
       });
     }
   });
+
   document.addEventListener("input", function (e) {
     if (e.target.matches(".eveui_itemselect input")) {
       let eveui_itemselect = e.target.closest(".eveui_itemselect");
@@ -404,7 +399,7 @@ let eveui;
         let request_timestamp = performance.now();
 
         // Get item ids that match input
-        fetchData({
+        ajax({
           url: eveui_esi_endpoint(`/search`),
           cache: true,
           data: {
@@ -415,7 +410,7 @@ let eveui;
           if (!data.inventorytype) return;
 
           // Get names for required item ids
-          fetchData({
+          ajax({
             url: eveui_esi_endpoint(`/universe/names/`),
             cache: true,
             method: "POST",
@@ -444,12 +439,15 @@ let eveui;
       }
     }
   });
+
   // close itemselect window on any outside click
-  document.addEventListener("click", (e) => {
-    if (e.target.closest(".eveui_itemselect, .eveui_more_icon")) return;
+  document.addEventListener("click", function (e) {
+    if (e.target.closest(".eveui_itemselect, .eveui_more_icon")) {
+      return;
+    }
     document.querySelectorAll(".eveui_itemselect").forEach(el => el.remove());
   });
-  
+
   document.addEventListener("click", function (e) {
     if (e.target.matches(".eveui_copy_icon")) {
       let contentElement = e.target.closest(".eveui_content");
@@ -458,1110 +456,1016 @@ let eveui;
       }
     }
   });
+
   // custom window drag handlers
   document.addEventListener("mousedown", function (e) {
     if (e.target.matches(".eveui_window")) {
       e.target.style.zIndex = current_zindex++;
     }
   });
-  document.addEventListener("mousedown", (e) => {
-    if (!e.target.matches(".eveui_title")) return;
-  
+
+  $(document).on("mousedown", ".eveui_title", function (e) {
     e.preventDefault();
-    drag_element = e.target.closest(".eveui_window");
-    drag_element_x = e.clientX - drag_element.offsetLeft;
-    drag_element_y = e.clientY - drag_element.offsetTop;
-    drag_element.style.zIndex = current_zindex++;
+    drag_element = $(this).parent();
+    drag_element_x = mouse_x - drag_element.position().left;
+    drag_element_y = mouse_y - drag_element.position().top;
+    drag_element.css("z-index", current_zindex++);
   });
-  
-  document.addEventListener("mousemove", function (e) {
+  $(document).on("mousemove", function (e) {
     mouse_x = e.clientX;
     mouse_y = e.clientY;
-
     if (drag_element === null) {
       return;
     }
-
-    drag_element.style.left = (mouse_x - drag_element_x) + "px";
-    drag_element.style.top = (mouse_y - drag_element_y) + "px";
+    drag_element.css("left", mouse_x - drag_element_x);
+    drag_element.css("top", mouse_y - drag_element_y);
   });
-  document.addEventListener("mouseup", function () {
+  $(document).on("mouseup", function (e) {
     drag_element = null;
   });
-  window.addEventListener("resize", function () {
-    // Resize handler to keep windows on screen
-    document.querySelectorAll(".eveui_window").forEach(eveui_window => {
-      let eveui_content = eveui_window.querySelector(".eveui_content");
-
-      if (eveui_content.clientHeight > window.innerHeight - 50) {
-        eveui_window.style.height = (window.innerHeight - 50) + "px";
+  $(window).on("resize", function (e) {
+    // resize handler to try to keep windows onscreen
+    $(".eveui_window").each(function () {
+      let eveui_window = $(this);
+      let eveui_content = eveui_window.find(".eveui_content");
+      if (eveui_content.height() > window.innerHeight - 50) {
+        eveui_window.css("height", window.innerHeight - 50);
       } else {
-        eveui_window.style.height = "";
+        eveui_window.css("height", "");
       }
-
-      if (eveui_content.clientWidth > window.innerWidth - 40) {
-        eveui_window.style.width = (window.innerWidth - 40) + "px";
+      if (eveui_content.width() > window.innerWidth - 40) {
+        eveui_window.css("width", window.innerWidth - 40);
       } else {
-        eveui_window.style.width = "";
+        eveui_window.css("width", "");
       }
-
-      let rect = eveui_window.getBoundingClientRect();
-
-      if (rect.bottom > window.innerHeight) {
-        eveui_window.style.top = (window.innerHeight - eveui_window.clientHeight - 25) + "px";
+      if (eveui_window[0].getBoundingClientRect().bottom > window.innerHeight) {
+        eveui_window.css(
+          "top",
+          window.innerHeight - eveui_window.height() - 25
+        );
       }
-
-      if (rect.right > window.innerWidth) {
-        eveui_window.style.left = (window.innerWidth - eveui_window.clientWidth - 10) + "px";
+      if (eveui_window[0].getBoundingClientRect().right > window.innerWidth) {
+        eveui_window.css("left", window.innerWidth - eveui_window.width() - 10);
       }
     });
-
     if (eveui_mode === "modal") {
-      let eveui_window = document.querySelector("[data-eveui-modal]");
-      if (eveui_window) {
-        eveui_window.style.top = (window.innerHeight / 2 - eveui_window.clientHeight / 2) + "px";
-        eveui_window.style.left = (window.innerWidth / 2 - eveui_window.clientWidth / 2) + "px";
-      }
+      let eveui_window = $("[data-eveui-modal]");
+      eveui_window.css(
+        "top",
+        window.innerHeight / 2 - eveui_window.height() / 2
+      );
+      eveui_window.css(
+        "left",
+        window.innerWidth / 2 - eveui_window.width() / 2
+      );
     }
   });
   mark("event handlers set");
+
   function eve_version_query() {
     mark("eve version request");
-  
-    fetchData({
+    ajax({
       url: eveui_esi_endpoint(`/status/`),
       dataType: "json",
       cache: true,
     })
-      .then(function (data) {
+      .done(function (data) {
         eve_version = data.server_version;
         mark("eve version response " + eve_version);
-  
-        if (window.indexedDB) {
+        if (indexedDB) {
           // indexedDB is available
           let open = indexedDB.open("eveui", eve_version);
-  
-          open.onupgradeneeded = function () {
+          open.onupgradeneeded = function (e) {
             let db = open.result;
             if (db.objectStoreNames.contains("cache")) {
               db.deleteObjectStore("cache");
             }
-            db.createObjectStore("cache", { keyPath: "path" });
+            db.createObjectStore("cache", {
+              keyPath: "path"
+            });
           };
-  
           open.onsuccess = function () {
-            let db = open.result;
+            db = open.result;
             let tx = db.transaction("cache", "readonly");
             let store = tx.objectStore("cache");
-  
             store.getAll().onsuccess = function (e) {
-              e.target.result.forEach(value => {
+              $.each(e.target.result, function (index, value) {
                 eveui.cache[value.path] = value;
               });
-  
-              document.addEventListener("DOMContentLoaded", eveui_document_ready);
+              $(document).ready(eveui_document_ready);
             };
           };
         } else {
           // indexedDB not available
-          document.addEventListener("DOMContentLoaded", eveui_document_ready);
+          $(document).ready(eveui_document_ready);
         }
-  
         setInterval(autoexpand, 100);
       })
-      .catch(function () {
+      .fail(function (xhr) {
         mark("eve version request failed");
         setTimeout(eve_version_query, 10000);
       });
   }
   eve_version_query();
+
   function eveui_document_ready() {
-    // Expand fits where applicable
+    // expand fits where applicable
     mark("expanding fits");
     expand();
     cache_request("/markets/prices");
-  
-    // Start preload timer
+    // start preload timer
     preload_timer = setTimeout(lazy_preload, eveui_preload_interval);
     mark("preload timer set");
   }
+
   function new_window(title = "&nbsp;") {
-    let eveui_window = document.createElement("article");
-    eveui_window.className = "eveui_window card shadow";
-    eveui_window.innerHTML = `
-      <header class="eveui_title card-header">
-        <h4>${title}</h4>
-      </header>
-      <span class="eveui_icon eveui_close_icon"></span>
-      <span class="eveui_scrollable">
-        <span class="eveui_content">
-          <span class="border-spinner"></span>
-          Loading...
+    let eveui_window = $(`
+      <article class="eveui_window card shadow">
+        <header class="eveui_title card-header">
+          <h4>${title}</h4>
+        </header>
+        <span class="eveui_icon eveui_close_icon" ></span>
+        <span class="eveui_scrollable">
+          <span class="eveui_content">
+            <span class="border-spinner"></span>
+            Loading...
+          </span>
         </span>
-      </span>
-    `;
-  
-    if (eveui_mode === "modal" && !document.querySelector(".eveui_modal_overlay")) {
-      let modalOverlay = document.createElement("div");
-      modalOverlay.className = "eveui_modal_overlay";
-      document.body.appendChild(modalOverlay);
-      eveui_window.setAttribute("data-eveui-modal", "1");
+      </article>`);
+    if (eveui_mode === "modal" && $(".eveui_modal_overlay").length === 0) {
+      $("body").append(`<div class="eveui_modal_overlay" />`);
+      eveui_window.attr("data-eveui-modal", 1);
     }
-  
-    eveui_window.style.zIndex = current_zindex++;
-    eveui_window.style.left = (mouse_x + 10) + "px";
-    eveui_window.style.top = (mouse_y - 10) + "px";
-  
+    eveui_window.css("z-index", current_zindex++);
+    eveui_window.css("left", mouse_x + 10);
+    eveui_window.css("top", mouse_y - 10);
     return eveui_window;
   }
+
   function mark(mark) {
-    // Log script time with annotation for performance metric
+    // log script time with annotation for performance metric
     console.log("eveui: " + performance.now().toFixed(3) + " " + mark);
   }
+
   function format_fit(dna, eveui_name) {
-    // Generates HTML for a fit display
-    let high_slots = {}, med_slots = {}, low_slots = {}, rig_slots = {};
-    let subsystem_slots = {}, other_slots = {}, cargo_slots = {};
+    // generates html for a fit display
+    let high_slots = {};
+    let med_slots = {};
+    let low_slots = {};
+    let rig_slots = {};
+    let subsystem_slots = {};
+    let other_slots = {};
+    let cargo_slots = {};
     let items = dna.split(":");
-  
-    // Ship name and number of slots
-    let ship_id = parseInt(items.shift(), 10);
+    // ship name and number of slots
+    let ship_id = parseInt(items.shift());
     let ship = cache_retrieve("/universe/types/" + ship_id);
     ship.hiSlots = 0;
     ship.medSlots = 0;
     ship.lowSlots = 0;
-  
-    ship.dogma_attributes.forEach(attr => {
+    for (let i in ship.dogma_attributes) {
+      let attr = cache_retrieve("/universe/types/" + ship_id)
+        .dogma_attributes[i];
       switch (attr.attribute_id) {
-        case 14: ship.hiSlots = attr.value; break;
-        case 13: ship.medSlots = attr.value; break;
-        case 12: ship.lowSlots = attr.value; break;
-        case 1137: ship.rigSlots = attr.value; break;
-        case 1367: ship.maxSubSystems = attr.value; break;
+        case 14: // hiSlots
+          ship.hiSlots = attr.value;
+          break;
+        case 13: // medSlots
+          ship.medSlots = attr.value;
+          break;
+        case 12: // lowSlots
+          ship.lowSlots = attr.value;
+          break;
+        case 1137: // rigSlots
+          ship.rigSlots = attr.value;
+          break;
+        case 1367: //maxSubSystems
+          ship.maxSubSystems = attr.value;
+          break;
       }
-    });
-  
-    // Categorize items into slots
-    for (let item of items) {
-      if (!item.length) continue;
-  
-      let [item_id, quantity] = item.split(";");
-      quantity = parseInt(quantity, 10);
-  
-      if (item_id.endsWith("_")) {
-        cargo_slots[item_id.slice(0, -1)] = quantity;
+    }
+    // categorize items into slots
+    outer: for (let i in items) {
+      if (items[i].length === 0) {
         continue;
       }
-  
-      let itemData = cache_retrieve("/universe/types/" + item_id);
-      
-      let categorized = false;
-      itemData.dogma_attributes.forEach(attr => {
-        if (attr.attribute_id === 1272) {
-          other_slots[item_id] = quantity;
-          categorized = true;
-        } else {
-          switch (attr.attribute_id) {
-            case 1374: ship.hiSlots += attr.value; break;
-            case 1375: ship.medSlots += attr.value; break;
-            case 1376: ship.lowSlots += attr.value; break;
-          }
+      let match = items[i].split(";");
+      let item_id = match[0];
+      let quantity = parseInt(match[1]);
+      if (item_id.endsWith("_")) {
+        item_id = item_id.slice(0, -1);
+        cargo_slots[item_id] = quantity;
+        continue;
+      }
+      let item = cache_retrieve("/universe/types/" + item_id);
+      for (let j in item.dogma_attributes) {
+        let attr = item.dogma_attributes[j];
+        switch (attr.attribute_id) {
+          case 1272:
+            other_slots[item_id] = quantity;
+            continue outer;
+          case 1374: // hiSlotModifier
+            ship.hiSlots += attr.value;
+            break;
+          case 1375: // medSlotModifier
+            ship.medSlots += attr.value;
+            break;
+          case 1376: // lowSlotModifier
+            ship.lowSlots += attr.value;
+            break;
         }
-      });
-  
-      if (categorized) continue;
-  
-      itemData.dogma_effects.forEach(effect => {
+      }
+      for (let j in item.dogma_effects) {
+        let effect = item.dogma_effects[j];
         switch (effect.effect_id) {
-          case 12: high_slots[item_id] = quantity; break;
-          case 13: med_slots[item_id] = quantity; break;
-          case 11: low_slots[item_id] = quantity; break;
-          case 2663: rig_slots[item_id] = quantity; break;
-          case 3772: subsystem_slots[item_id] = quantity; break;
-          default: cargo_slots[item_id] = quantity;
+          case 12: // hiPower
+            high_slots[item_id] = quantity;
+            continue outer;
+          case 13: // medPower
+            med_slots[item_id] = quantity;
+            continue outer;
+          case 11: // loPower
+            low_slots[item_id] = quantity;
+            continue outer;
+          case 2663: // rigSlot
+            rig_slots[item_id] = quantity;
+            continue outer;
+          case 3772: // subSystem
+            subsystem_slots[item_id] = quantity;
+            continue outer;
         }
-      });
+      }
+      cargo_slots[item_id] = quantity;
     }
-  
+
     function item_rows(fittings, slots_available) {
+      // generates table rows for listed slots
       let html = "";
       let slots_used = 0;
-  
       for (let item_id in fittings) {
         let item = cache_retrieve("/universe/types/" + item_id);
         slots_used += fittings[item_id];
-  
-        html += `<tr class="copy_only"><td>${item.name} x${fittings[item_id]}<br></td></tr>`;
-        html += `<tr class="nocopy" data-eveui-itemid="${item_id}">
-            <td><img src="${eveui_imageserver("types/" + item_id + "/icon?size=64")}" class="eveui_icon eveui_item_icon"></td>
-            <td class="eveui_right">${fittings[item_id]}</td>
-            <td colspan="2"><div class="eveui_rowcontent">${item.name}</div></td>
-            <td class="eveui_right whitespace_nowrap">
-              <span data-itemid="${item_id}" class="eveui_icon eveui_info_icon"></span>
-              <span class="eveui_icon eveui_plus_icon eveui_edit"></span>
-              <span class="eveui_icon eveui_minus_icon eveui_edit"></span>
-              <span class="eveui_icon eveui_more_icon eveui_edit"></span>
-            </td>
-          </tr>`;
+        if (slots_available) {
+          html += `<tr class="copy_only"><td>${(item.name + "<br />").repeat(
+            fittings[item_id]
+          )}`;
+        } else {
+          html += `<tr class="copy_only"><td>${item.name} x${fittings[item_id]}<br />`;
+        }
+        html += `<tr class="nocopy" data-eveui-itemid="${item_id}"><td><img src="${eveui_imageserver(
+          "types/" + item_id + "/icon?size=64"
+        )}" class="eveui_icon eveui_item_icon" /><td class="eveui_right">${fittings[item_id]
+          }<td colspan="2"><div class="eveui_rowcontent">${item.name
+          }</div><td class="eveui_right whitespace_nowrap"><span data-itemid="${item_id}" class="eveui_icon eveui_info_icon" /><span class="eveui_icon eveui_plus_icon eveui_edit" /><span class="eveui_icon eveui_minus_icon eveui_edit" /><span class="eveui_icon eveui_more_icon eveui_edit" />`;
       }
-  
       if (typeof slots_available !== "undefined") {
         if (slots_available > slots_used) {
-          html += `<tr class="nocopy">
-            <td class="eveui_icon eveui_item_icon"></td>
-            <td class="eveui_right whitespace_nowrap">${slots_available - slots_used}</td>
-            <td colspan="2"><div class="eveui_rowcontent">Empty</div></td>
-            <td class="eveui_right"><span class="eveui_icon eveui_more_icon eveui_edit"></span></td>
-          </tr>`;
+          html += `<tr class="nocopy"><td class="eveui_icon eveui_item_icon" /><td class="eveui_right whitespace_nowrap">${slots_available - slots_used
+            }<td colspan="2"><div class="eveui_rowcontent">Empty</div><td class="eveui_right"><span class="eveui_icon eveui_more_icon eveui_edit" />`;
         }
         if (slots_used > slots_available) {
-          html += `<tr class="nocopy">
-            <td class="eveui_icon eveui_item_icon"></td>
-            <td class="eveui_right">${slots_available - slots_used}</td>
-            <td><div class="eveui_rowcontent">Excess</div></td>
-          </tr>`;
+          html += `<tr class="nocopy"><td class="eveui_icon eveui_item_icon" /><td class="eveui_right">${slots_available - slots_used
+            }<td><div class="eveui_rowcontent">Excess</div>`;
         }
       }
-  
       return html;
     }
-  
     let html = `
-      <span class="float_right">
-        <eveui type="fit_stats" key="${dna}"></eveui>
-      </span>
-      <table class="eveui_fit_table">
-        <thead>
-          <tr class="eveui_fit_header" data-eveui-itemid="${ship_id}">
-            <td colspan="2">
-              <img src="${eveui_imageserver("types/" + ship_id + "/render?size=512")}" class="eveui_icon eveui_ship_icon">
-            </td>
-            <td>
-              <div class="eveui_rowcontent">
-                <span class="eveui_startcopy"></span>
-                [
-                <a target="_blank" href="${eveui_urlify(dna)}">
-                  ${ship.name}, ${eveui_name || ship.name}
-                </a>
-                ]
-                <br>
-              </div>
-            </td>
-            <td class="eveui_right whitespace_nowrap nocopy" colspan="2">
-              ${eveui_allow_edit ? '<span class="eveui_icon eveui_edit_icon"></span>' : ""}
-              <span class="eveui_icon eveui_copy_icon"></span>
-              <span data-itemid="${ship_id}" class="eveui_icon eveui_info_icon"></span>
-              <span class="eveui_icon eveui_edit"></span>
-              <span class="eveui_icon eveui_more_icon eveui_edit"></span>
-            </td>
-          </tr>
-        </thead>
-        <tbody class="whitespace_nowrap">
-          ${item_rows(high_slots, ship.hiSlots)}
-          <tr><td class="eveui_line_spacer">&nbsp;${item_rows(med_slots, ship.medSlots)}</td></tr>
-          <tr><td class="eveui_line_spacer">&nbsp;${item_rows(low_slots, ship.lowSlots)}</td></tr>
-          <tr><td class="eveui_line_spacer">&nbsp;${item_rows(rig_slots, ship.rigSlots)}</td></tr>
-          <tr><td class="eveui_line_spacer">&nbsp;${item_rows(subsystem_slots, ship.maxSubSystems)}</td></tr>
-          <tr><td class="eveui_line_spacer">&nbsp;${item_rows(other_slots)}</td></tr>
-          <tr><td class="eveui_line_spacer">&nbsp;${item_rows(cargo_slots)}</td></tr>
-        </tbody>
-      </table>
-      <span class="eveui_endcopy"></span>`;
-  
+  <span class="float_right">
+    <eveui type="fit_stats" key="${dna}"></eveui>
+  </span>
+  <table class="eveui_fit_table">
+    <thead>
+      <tr class="eveui_fit_header" data-eveui-itemid="${ship_id}">
+        <td colspan="2">
+          <img src="${eveui_imageserver(
+      "types/" + ship_id + "/render?size=512"
+    )}" class="eveui_icon eveui_ship_icon" />
+        </td>
+        <td>
+          <div class="eveui_rowcontent">
+            <span class="eveui_startcopy"></span>
+            [
+            <a target="_blank" href="${eveui_urlify(dna)}">
+              ${ship.name}, ${eveui_name || ship.name}
+            </a>
+            ]
+          <br/>
+          </div>
+        </td>
+        <td class="eveui_right whitespace_nowrap nocopy" colspan="2">
+          ${eveui_allow_edit
+        ? '<span class="eveui_icon eveui_edit_icon"></span>'
+        : ""
+      }
+          <span class="eveui_icon eveui_copy_icon"</span>
+          <span data-itemid="${ship_id}" class="eveui_icon eveui_info_icon"></span>
+          <span class="eveui_icon eveui_edit"></span>
+          <span class="eveui_icon eveui_edit"></span>
+          <span class="eveui_icon eveui_more_icon eveui_edit"></span>
+        </td>
+      </tr>
+    </thead>
+    <tbody class="whitespace_nowrap">
+      ${item_rows(high_slots, ship.hiSlots)}
+      <tr>
+        <td class="eveui_line_spacer">
+          &nbsp;${item_rows(med_slots, ship.medSlots)}
+        </td>
+      </tr>
+      <tr>
+        <td class="eveui_line_spacer">
+          &nbsp;${item_rows(low_slots, ship.lowSlots)}
+        </td>
+      </tr>
+      <tr>
+        <td class="eveui_line_spacer">
+          &nbsp;${item_rows(rig_slots, ship.rigSlots)}
+        </td>
+      </tr>
+      <tr>
+        <td class="eveui_line_spacer">
+          &nbsp;${item_rows(subsystem_slots, ship.maxSubSystems)}
+        </td>
+      </tr>
+      <tr>
+        <td class="eveui_line_spacer">
+          &nbsp;${item_rows(other_slots)}
+        </td>
+      </tr>
+      <tr>
+        <td class="eveui_line_spacer">
+          &nbsp;${item_rows(cargo_slots)}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <span class="eveui_endcopy"></span>`;
     return html;
   }
   eveui.format_fit = format_fit;
+
   function fit_window(dna, eveui_name) {
-    // Creates and populates a fit window
+    // creates and populates a fit window
     let eveui_window = new_window("Fit");
-    eveui_window.classList.add("fit_window");
-    eveui_window.setAttribute("data-eveui-dna", dna);
-    document.body.appendChild(eveui_window);
-    window.dispatchEvent(new Event("resize"));
-  
-    // Load required items and set callback to display
+    eveui_window.addClass("fit_window");
+    eveui_window.attr("data-eveui-dna", dna);
+    $("body").append(eveui_window);
+    $(window).trigger("resize");
+    // load required items and set callback to display
     mark("fit window created");
-  
     cache_items(dna)
-      .then(() => {
-        let content = eveui_window.querySelector(".eveui_content");
-        if (content) {
-          content.innerHTML = format_fit(dna, eveui_name);
-        }
-        window.dispatchEvent(new Event("resize"));
+      .done(function () {
+        eveui_window.find(".eveui_content ").html(format_fit(dna, eveui_name));
+        $(window).trigger("resize");
         mark("fit window populated");
       })
-      .catch(() => {
+      .fail(function () {
         eveui_window.remove();
       });
-  
     return eveui_window;
   }
   eveui.fit_window = fit_window;
+
   function format_item(item_id) {
     let item = cache_retrieve("/universe/types/" + item_id);
-    let marketData = market_retrieve(item_id);
-    
     let html = `
       <div class="card">
-        <header class="card-header">
-          <figure class="figure">
-            <figcaption class="figure-caption">
-              <h3>${item.name}</h3>
-            </figcaption>
-            <img src="${eveui_imageserver("types/" + item_id + "/render?size=512")}" class="figure-img img-fluid rounded" />
-          </figure>
-          <dl>
-            <dt>Estimated price</dt>
-            <dd class="text-end">Ƶ${format_number(marketData.average_price)}</dd>
-          </dl>
-        </header>
-        <div class="card-body text-wrap">
-          ${item.description}
-          <header>Attributes</header>
-          <dl>`;
-  
-    item.dogma_attributes.forEach(attr => {
+      <header class="card-header">
+      <figure class="figure">
+      <figcaption class="figure-caption">
+      <h3>
+      ${item.name}
+      </h3>
+      </figcaption>
+  <img src="${eveui_imageserver("types/" + item_id + "/render?size=512")}" class="figure-img img-fluid rounded" />
+  </figure>
+  <dl>
+    <dt>Estimated price</dt>
+    <dd class="text-end">Ƶ${format_number(market_retrieve(item_id).average_price)}</dd>
+</dl>
+  </header>
+  <div class="card-body text-wrap">
+  ${item.description}
+
+<header>
+        Attributes
+</header><dl>`;
+    for (let i in item.dogma_attributes) {
+      let attr = item.dogma_attributes[i];
       html += `
-        <dt>
-          <eveui key="/dogma/attributes/${attr.attribute_id}" path="display_name,name">
-            attribute:${attr.attribute_id}
-          </eveui>
-        </dt>
-        <dd class="text-end border-bottom">
-          ${format_number(attr.value)}
-        </dd>`;
-    });
-  
-    html += `</dl></div></div>`;
+    
+      <dt>
+        <eveui key="/dogma/attributes/${attr.attribute_id}" path="display_name,name">
+          attribute:${attr.attribute_id}
+        </eveui>
+      </dt>
+      <dd class="text-end border-bottom">
+        ${format_number(attr.value)}
+      </dd>
+    `;
+    }
+    html += "</dl></div></div>";
     return html;
   }
   eveui.format_item = format_item;
+
   function item_window(item_id) {
-    // Creates and populates an item window
+    // creates and populates an item window
     let eveui_window = new_window("Item");
-    eveui_window.setAttribute("data-eveui-itemid", item_id);
-    eveui_window.classList.add("item_window");
-  
+    eveui_window.attr("data-eveui-itemid", item_id);
+    eveui_window.addClass("item_window");
     switch (eveui_mode) {
       default:
-        document.body.appendChild(eveui_window);
+        $("body").append(eveui_window);
         break;
     }
-  
     mark("item window created");
-  
-    // Load required items and set callback to display
+    // load required items and set callback to display
     cache_request("/universe/types/" + item_id)
-      .then(() => {
-        let content = eveui_window.querySelector(".eveui_content");
-        if (content) {
-          content.innerHTML = format_item(item_id);
-        }
-        window.dispatchEvent(new Event("resize"));
+      .done(function () {
+        eveui_window.find(".eveui_content").html(format_item(item_id));
+        $(window).trigger("resize");
         mark("item window populated");
       })
-      .catch(() => {
+      .fail(function () {
         eveui_window.remove();
       });
-  
-    window.dispatchEvent(new Event("resize"));
+    $(window).trigger("resize");
     return eveui_window;
   }
   eveui.item_window = item_window;
 
   function format_char(char_id) {
     let character = cache_retrieve("/characters/" + char_id);
-  
     let html = `
-      <hr/>
-      <figure class="figure">
-        <figcaption class="figure-caption">
-          ${character.name}
-        </figcaption>
-        <img src="${eveui_imageserver("characters/" + char_id + "/portrait?size=512")}" 
-             class="img-fluid img-rounded figure-img"/>
-      </figure>
-      <hr />
-      <table class="table table-hover table-borderless">
-        <thead>
-          <tr>
-            <th>Member of</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td colspan="1">
-              <figure class="figure">
-                <figcaption class="figure-caption">
-                  <a href="corp:${character.corporation_id}">
-                    <eveui key="/corporations/${character.corporation_id}" path="name">
-                      ${character.corporation_id}
-                    </eveui>
-                  </a>
-                </figcaption>
-                <img class="border figure-img img-fluid rounded" 
-                     src="${eveui_imageserver("corporations/" + character.corporation_id + "/logo?size=128")}" 
-                     height="96" width="96" />
-              </figure>
-            </td>
-          </tr>
-          <tr>
-            <td colspan="1" style="text-align: right;">Bio:&nbsp;</td>
-            <td style="text-align: left;">
-              ${character.description.replace(/<font[^>]+>/g, "<font>")}
-            </td>
-          </tr>
-        </tbody>
-      </table>`;
+ <hr/>
+  <figure class="figure">
+  <figcaption class="figure-caption">
+        ${character.name}
+</figcaption>
+ 
   
+          <img src="${eveui_imageserver(
+      "characters/" + char_id + "/portrait?size=512"
+    )}" class="img-fluid img-rounded figure-img"/>
+     
+ </figure>
+      <hr />
+        <table class="table table-hover table-borderless">
+        <thead>
+        <tr>
+        <th> Member of</th></tr></thead>
+    <tbody>
+   
+        <td colspan="1">
+        
+        <figure class="figure">
+        <figcaption class="figure-caption">
+                  
+          <a href="corp:${character.corporation_id}">
+            <eveui key="/corporations/${character.corporation_id
+      }" path="name">
+              ${character.corporation_id}
+            </eveui>
+          </a>
+          </figcaption>
+          <img  class="border figure-img img-fluid rounded" src="${eveui_imageserver(
+        "corporations/" + character.corporation_id + "/logo?size=128"
+      )}" height="96" width="96" />
+          </figure>
+        </td>
+       
+
+      </tr>
+      <tr>
+        <td colspan="1" style="text-align: right;">
+          Bio:&nbsp;
+        </td>
+        <td style="text-align:left;">
+          ${character.description.replace(/<font[^>]+>/g, "<font>")}
+        </td>
+      </tr>
+    </tbody>
+  </table>`;
     return html;
   }
   eveui.format_char = format_char;
 
   function char_window(char_id) {
     let eveui_window = new_window("Character");
-    eveui_window.setAttribute("data-eveui-charid", char_id);
-    eveui_window.classList.add("char_window");
-  
+    eveui_window.attr("data-eveui-charid", char_id);
+    eveui_window.addClass("char_window");
     switch (eveui_mode) {
       default:
-        document.body.appendChild(eveui_window);
+        $("body").append(eveui_window);
         break;
     }
-  
     mark("char window created");
-  
-    // Load required characters and set callback to display
+    // load required chars and set callback to display
     cache_request("/characters/" + char_id)
-      .then(() => {
-        let content = eveui_window.querySelector(".eveui_content");
-        if (content) {
-          content.innerHTML = format_char(char_id);
-        }
-        window.dispatchEvent(new Event("resize"));
+      .done(function () {
+        eveui_window.find(".eveui_content").html(format_char(char_id));
+        $(window).trigger("resize");
         mark("char window populated");
       })
-      .catch(() => {
+      .fail(function () {
         eveui_window.remove();
       });
-  
-    window.dispatchEvent(new Event("resize"));
+    $(window).trigger("resize");
     return eveui_window;
   }
   eveui.char_window = char_window;
+
   function format_corp(corp_id) {
     let corporation = cache_retrieve("/corporations/" + corp_id);
-  
     return `
-      <div class="container-fluid">
-        <figure class="figure">
-          <figcaption class="figure-caption">
-            <hr/>
-            ${corporation.name}
-            <hr />
-          </figcaption>
-          <img src="${eveui_imageserver("corporations/" + corp_id + "/logo?size=256")}" 
-               class="img-fluid border rounded figure-img"/>
+    <div class="container-fluid">
+ <figure class="figure">
+  <figcaption class="figure-caption">
+  <hr/>
+         ${corporation.name}
+        <hr />
+</figcaption>
+          <img src="${eveui_imageserver(
+      "corporations/" + corp_id + "/logo?size=256"
+    )}" class="img-fluid border rounded figure-img"/>
           <hr />
-        </figure>
-        <table class="table">
-          <tr>
-            <td>
-              <img class="float_left" 
-                   src="${eveui_imageserver("alliances/" + corporation.alliance_id + "/logo?size=128")}" 
-                   height="128" width="128" />
-              Member of
-              <eveui key="/alliances/${corporation.alliance_id}" path="name">
-                ${corporation.alliance_id}
-              </eveui>
-            </td>
-          </tr>
-          <tr>
-            <td>Bio:</td>
-            <td>
-              ${corporation.description.replace(/<font[^>]+>/g, "<font>")}
-            </td>
-          </tr>
-        </table>
-      </div>`;
+ </figure>
+          <table class="table">
+    <tr>
+      <td>
+        <img class="float_left" src="${eveui_imageserver(
+      "alliances/" + corporation.alliance_id + "/logo?size=128"
+    )}" height="128" width="128" />
+        Member of
+        <eveui key="/alliances/${corporation.alliance_id}" path="name">
+  ${corporation.alliance_id}
+        </eveui>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        Bio:
+      </td>
+      <td>
+        ${corporation.description.replace(/<font[^>]+>/g, "<font>")}
+      </td>
+    </tr>
+  </table>
+  </div>`;
   }
   eveui.format_corp = format_corp;
+
   function corp_window(corp_id) {
     let eveui_window = new_window("Corporation");
-    eveui_window.setAttribute("data-eveui-corpid", corp_id);
-    eveui_window.classList.add("corp_window");
-  
+    eveui_window.attr("data-eveui-corpid", corp_id);
+    eveui_window.addClass("corp_window");
     switch (eveui_mode) {
       default:
-        document.body.appendChild(eveui_window);
+        $("body").append(eveui_window);
         break;
     }
-  
     mark("corp window created");
-  
-    // Load required corps and set callback to display
+    // load required corps and set callback to display
     cache_request("/corporations/" + corp_id)
-      .then(() => {
-        let content = eveui_window.querySelector(".eveui_content");
-        if (content) {
-          content.innerHTML = format_corp(corp_id);
-        }
-        window.dispatchEvent(new Event("resize"));
+      .done(function () {
+        eveui_window.find(".eveui_content").html(format_corp(corp_id));
+        $(window).trigger("resize");
         mark("corp window populated");
       })
-      .catch(() => {
+      .fail(function () {
         eveui_window.remove();
       });
-  
-    window.dispatchEvent(new Event("resize"));
+    $(window).trigger("resize");
     return eveui_window;
   }
   eveui.corp_window = corp_window;
   // i am going for clarity and extendability here more so than efficiency
   function format_fitstats(dna) {
     return `
-      <span class="card shadow eveui_fit_stats text-body">
-        <dl>
-          <dt>Estimated Price</dt>
-          <dd>${formatMoney(calculate_fit_price(dna))}</dd>
-          <dt>Gun Damage</dt>
-          <dd>${format_number(calculate_gun_dps(dna), "DPS")}</dd>
-          <dt>Missile Damage</dt>
-          <dd>?</dd>
-          <dt>Drone Damage</dt>
-          <dd>?</dd>
-        </dl>
-      </span>`;
+  <span class="card shadow eveui_fit_stats text-body">
+<dl>
+<dt>Estimated Price</dt>
+<dd>${formatMoney(calculate_fit_price(dna))}</dd>
+<dt>Gun Damage</dt>
+<dd>${format_number(calculate_gun_dps(dna), "DPS")}</dd>
+<dt>Missile Damage</dt>
+<dd>?</dd>
+<dt>Drone Damage</dt>
+<dd>?</dd>
+</dl>
+  </span>`;
   }
   eveui.format_fitstats = format_fitstats;
+
   function calculate_fit_price(dna) {
     let items = dna.split(":");
     let total_price = 0;
-    let market_prices = cache_retrieve("/markets/prices");
-  
-    for (let item of items) {
-      if (item.length === 0) {
+    for (let i in items) {
+      if (items[i].length === 0) {
         continue;
       }
-  
-      let match = item.split(";");
+      let match = items[i].split(";");
       let item_id = match[0];
-      let quantity = parseInt(match[1], 10) || 1;
-  
-      let price_entry = market_prices.find(v => v.type_id == item_id);
-      if (price_entry) {
-        total_price += price_entry.average_price * quantity;
-      }
+      let quantity = parseInt(match[1]) || 1;
+      total_price +=
+        $.grep(cache_retrieve("/markets/prices"), function (v) {
+          return v["type_id"] == item_id;
+        })[0]["average_price"] * quantity;
     }
-  
     return total_price;
   }
+
   function calculate_gun_dps(dna) {
     let total_dps = 0;
     let items = dna.replace(/:+$/, "").split(":");
-  
-    for (let itemStr of items) {
-      let [item_id, quantity] = itemStr.split(";");
-      quantity = parseInt(quantity, 10) || 1;
-  
+    for (let i in items) {
+      let match = items[i].split(";");
+      let item_id = match[0];
+      let quantity = parseInt(match[1]) || 1;
       let item = cache_retrieve("/universe/types/" + item_id);
       let attr = {};
-  
-      for (let attribute of item.dogma_attributes) {
-        attr[attribute.attribute_id] = attribute.value;
+      for (let j in item.dogma_attributes) {
+        attr[item.dogma_attributes[j]["attribute_id"]] =
+          item.dogma_attributes[j]["value"];
       }
-  
       let groups = {
         53: "energy",
         55: "projectile",
         74: "hybrid",
       };
-  
-      if (groups[item.group_id]) {
+      if (item.group_id in groups) {
         let base_dmg = 0;
         let base_dmg_mult = attr[64];
         let base_rof = attr[51] / 1000;
         let dmg_mult = [];
         let rof_mult = [];
-        let ammo_groups = {
-          [attr[604]]: 1,
-          [attr[605]]: 1,
-        };
-  
-        // Check all items for any relevant modifiers
-        for (let innerItemStr of items) {
-          let [inner_item_id, inner_quantity] = innerItemStr.split(";");
-          inner_quantity = parseInt(inner_quantity, 10) || 1;
-  
-          let inner_item = cache_retrieve("/universe/types/" + inner_item_id);
-          let inner_attr = {};
-  
-          for (let attribute of inner_item.dogma_attributes) {
-            inner_attr[attribute.attribute_id] = attribute.value;
+        let ammo_groups = {};
+        ammo_groups[attr[604]] = 1;
+        ammo_groups[attr[605]] = 1;
+        // check all items for any relevant modifiers
+        for (let j in items) {
+          let match = items[j].split(";");
+          let item_id = match[0];
+          let quantity = parseInt(match[1]) || 1;
+          let item = cache_retrieve("/universe/types/" + item_id);
+          let attr = {};
+          for (let k in item.dogma_attributes) {
+            attr[item.dogma_attributes[k]["attribute_id"]] =
+              item.dogma_attributes[k]["value"];
           }
-  
-          // Find highest damage ammo
-          if (inner_item.group_id in ammo_groups) {
-            let total_dmg = (inner_attr[114] || 0) +
-                            (inner_attr[116] || 0) +
-                            (inner_attr[117] || 0) +
-                            (inner_attr[118] || 0);
+          // find highest damage ammo
+          if (item.group_id in ammo_groups) {
+            let total_dmg = 0;
+            total_dmg += attr[114];
+            total_dmg += attr[116];
+            total_dmg += attr[117];
+            total_dmg += attr[118];
             if (total_dmg > base_dmg) {
               base_dmg = total_dmg;
             }
           }
-  
-          // Rate of fire (RoF) modifiers
-          if (204 in inner_attr) {
-            for (let k = 0; k < inner_quantity; k++) {
-              rof_mult.push(inner_attr[204]);
+          // rof
+          if (204 in attr) {
+            for (let k = 0; k < quantity; k++) {
+              rof_mult.push(attr[204]);
             }
           }
-  
-          // Damage multipliers
-          if (inner_item.group_id === 302 && 64 in inner_attr) {
-            for (let k = 0; k < inner_quantity; k++) {
-              dmg_mult.push(inner_attr[64]);
-            }
+          // dmg_mult
+          switch (item.group_id) {
+            case 302:
+              if (64 in attr) {
+                for (let k = 0; k < quantity; k++) {
+                  dmg_mult.push(attr[64]);
+                }
+              }
+              break;
           }
         }
-  
-        // Apply skill bonuses (assuming level 5 skills)
-        base_rof *= 0.9;  // Gunnery
-        base_rof *= 0.8;  // Rapid firing
-  
-        rof_mult.sort((a, b) => a - b);
-        for (let i = 0; i < rof_mult.length; i++) {
+        // skills, we are only going to handle level 5 skills, we are a basic fit display system, not an actually fitting program
+        base_rof *= 0.9; // gunnery
+        base_rof *= 0.8; // rapid firing
+        rof_mult.sort(function (a, b) {
+          return a - b;
+        });
+        for (let i in rof_mult) {
           base_rof *= 1 - (1 - rof_mult[i]) * stacking[i];
         }
-  
-        base_dmg_mult *= 1.15;  // Surgical Strike
-        base_dmg_mult *= 1.25;  // Turret Skill
-        base_dmg_mult *= 1.1;   // Turret Spec (TODO: Only for T2 weapons)
-        base_dmg_mult *= 1.375; // Ship Skill (TODO: Actual ship skill calculations)
-  
-        dmg_mult.sort((a, b) => b - a);
-        for (let i = 0; i < dmg_mult.length; i++) {
+        base_dmg_mult *= 1.15; // surgical strike
+        base_dmg_mult *= 1.25; // turret skill
+        base_dmg_mult *= 1.1; // turret spec TODO: only for guns that require t2 skill
+        base_dmg_mult *= 1.375; // ship skill TODO: actual ship skill
+        dmg_mult.sort(function (a, b) {
+          return b - a;
+        });
+        for (let i in dmg_mult) {
           base_dmg_mult *= 1 + (dmg_mult[i] - 1) * stacking[i];
         }
-  
         total_dps += ((base_dmg * base_dmg_mult) / base_rof) * quantity;
       }
     }
-  
     return total_dps;
   }
+
   function format_number(num, units = "") {
     if (isNaN(num)) {
       return "n/a";
     }
-  
     let suffix = "";
-    if (num >= 1_000_000_000) {
+    if (num >= 1000000000) {
       suffix = "B";
-      num /= 1_000_000_000;
-    } else if (num >= 1_000_000) {
+      num /= 1000000000;
+    } else if (num >= 1000000) {
       suffix = "M";
-      num /= 1_000_000;
-    } else if (num >= 1_000) {
+      num /= 1000000;
+    } else if (num >= 1000) {
       suffix = "K";
-      num /= 1_000;
+      num /= 1000;
     }
-  
-    // Format to remove .00 if whole number
+
+    // Remove .00 if it's a whole number
     const formattedNum = Number.isInteger(num) ? num.toFixed(0) : num.toFixed(2);
-  
+
     return `${formattedNum} ${suffix} ${units}`.trim();
   }
+
   function formatMoney(num) {
     return `Ƶ ${format_number(num)}`;
   }
+
   function expand() {
-    // Expands anything marked for expansion or all if in expand_all mode
+    // expands anything that has been marked for expansion, or all applicable if we are set to expand_all mode
     autoexpand();
-  
     let expand_filter = "[data-eveui-expand]";
     if (eveui_mode === "expand_all") {
       expand_filter = "*";
     }
-  
-    document.querySelectorAll(eveui_fit_selector)
-      .forEach(element => {
-        if (element.closest(".eveui_content")) return; // Prevent infinite loops
-  
-        let dna = element.getAttribute("data-dna") || element.href.substring(element.href.indexOf(":") + 1);
-  
-        cache_items(dna).then(() => {
-          let eveui_name = element.textContent.trim();
-          let eveui_content = document.createElement("span");
-          eveui_content.className = "eveui_content eveui_fit";
-          eveui_content.setAttribute("data-eveui-dna", dna);
-          eveui_content.innerHTML = format_fit(dna, eveui_name);
-  
-          element.replaceWith(eveui_content);
+    $(eveui_fit_selector)
+      .filter(expand_filter)
+      .each(function () {
+        let selected_element = $(this);
+        if (selected_element.closest(".eveui_content").length > 0) {
+          // if element is part of eveui content already, don't expand, otherwise we might get a really fun infinite loop
+          return;
+        }
+        let dna =
+          selected_element.attr("data-dna") ||
+          this.href.substring(this.href.indexOf(":") + 1);
+        cache_items(dna).done(function () {
+          let eveui_name = $(this).text().trim();
+          let eveui_content = $(
+            `<span class="eveui_content eveui_fit">${format_fit(
+              dna,
+              eveui_name
+            )}</span>`
+          );
+          eveui_content.attr("data-eveui-dna", dna);
+          selected_element = selected_element.replaceWith(eveui_content);
           mark("fit window expanded");
         });
       });
-  
-    document.querySelectorAll(eveui_item_selector)
-      .forEach(element => {
-        if (element.closest(".eveui_content")) return; // Prevent infinite loops
-  
-        let item_id = element.getAttribute("data-itemid") || element.href.substring(element.href.indexOf(":") + 1);
-  
-        cache_request("/universe/types/" + item_id).then(() => {
-          let eveui_content = document.createElement("span");
-          eveui_content.className = "eveui_content eveui_item";
-          eveui_content.innerHTML = format_item(item_id);
-  
-          element.replaceWith(eveui_content);
+    $(eveui_item_selector)
+      .filter(expand_filter)
+      .each(function () {
+        let selected_element = $(this);
+        if (selected_element.closest(".eveui_content").length > 0) {
+          // if element is part of eveui content already, don't expand, otherwise we might get a really fun infinite loop
+          return;
+        }
+        let item_id =
+          selected_element.attr("data-itemid") ||
+          this.href.substring(this.href.indexOf(":") + 1);
+        cache_request("/universe/types/" + item_id).done(function () {
+          selected_element.replaceWith(
+            `<span class="eveui_content eveui_item">
+              ${format_item(item_id)}</span>`
+          );
           mark("item window expanded");
         });
       });
-  
-    document.querySelectorAll(eveui_char_selector)
-      .forEach(element => {
-        if (element.closest(".eveui_content")) return; // Prevent infinite loops
-  
-        let char_id = element.getAttribute("data-charid") || element.href.substring(element.href.indexOf(":") + 1);
-  
-        cache_request("/characters/" + char_id).then(() => {
-          let eveui_content = document.createElement("span");
-          eveui_content.className = "eveui_content eveui_char";
-          eveui_content.innerHTML = format_char(char_id);
-  
-          element.replaceWith(eveui_content);
+    $(eveui_char_selector)
+      .filter(expand_filter)
+      .each(function () {
+        let selected_element = $(this);
+        if (selected_element.closest(".eveui_content").length > 0) {
+          // if element is part of eveui content already, don't expand, otherwise we might get a really fun infinite loop
+          return;
+        }
+        let char_id =
+          selected_element.attr("data-charid") ||
+          this.href.substring(this.href.indexOf(":") + 1);
+        cache_request("/characters/" + char_id).done(function () {
+          selected_element.replaceWith(
+            `<span class="eveui_content eveui_char">${format_char(
+              char_id
+            )}</span>`
+          );
           mark("char window expanded");
         });
       });
   }
   eveui.expand = expand;
+
   function autoexpand() {
-    // Expands elements that require expansion even when not in expand mode
-  
-    document.querySelectorAll("eveui[type=fit_stats]:not([state])").forEach(element => {
-      let dna = element.getAttribute("key");
-  
-      if (eveui_show_fitstats) {
-        cache_request("/markets/prices").then(() => {
-          element.innerHTML = format_fitstats(dna);
-        });
-      }
-  
-      element.setAttribute("state", "done");
-    });
-  
-    // Generic expansion of simple expressions
-    document.querySelectorAll("eveui:not([type]):not([state])").forEach(element => {
-      let key = element.getAttribute("key");
-      element.setAttribute("state", "loading");
-  
-      cache_request(key).then(() => {
-        let result = cache_retrieve(key);
-        let paths = element.getAttribute("path").split(",");
-  
-        for (let path of paths) {
-          let value = object_value(result, path);
-          if (value) {
-            element.innerHTML = value;
-            element.setAttribute("state", "done");
-            break;
-          }
+    // expands elements that require expansion even when not in expand mode
+    $("eveui[type=fit_stats]")
+      .filter(":not([state])")
+      .each(function () {
+        let selected_element = $(this);
+        let dna = selected_element.attr("key");
+        if (eveui_show_fitstats) {
+          cache_request("/markets/prices").done(function () {
+            selected_element.html(format_fitstats(dna));
+          });
         }
+        selected_element.attr("state", "done");
       });
-    });
+    // generic expansion of simple expressions
+    $("eveui:not([type])")
+      .filter(":not([state])")
+      .each(function () {
+        let selected_element = $(this);
+        let key = selected_element.attr("key");
+        selected_element.attr("state", "loading");
+        cache_request(key).done(function () {
+          let result = cache_retrieve(key);
+          $.each(
+            selected_element.attr("path").split(","),
+            function (index, path) {
+              let value = object_value(result, path);
+              if (value) {
+                selected_element.html(value);
+                selected_element.attr("state", "done");
+                return false;
+              }
+            }
+          );
+        });
+      });
   }
+
   function lazy_preload() {
-    // Preload timer function
+    // preload timer function
     preload_timer = setTimeout(lazy_preload, 5000);
-  
     if (requests_pending > 0) {
       return;
     }
-  
     if (preload_quota > 0) {
-      document.querySelectorAll(eveui_fit_selector + ":not([data-eveui-cached])").forEach(elem => {
-        let dna = elem.dataset.dna || elem.href.substring(elem.href.indexOf(":") + 1);
-        let promise = cache_items(dna);
-  
-        // Skip if already cached
-        if (promise.state && promise.state() === "resolved") {
-          elem.setAttribute("data-eveui-cached", "1");
-        } else {
-          preload_quota--;
-          promise.then(() => {
-            clearTimeout(preload_timer);
-            preload_timer = setTimeout(lazy_preload, eveui_preload_interval);
-          });
-          return;
-        }
-      });
+      $(eveui_fit_selector)
+        .not("[data-eveui-cached]")
+        .each(function (i) {
+          let elem = $(this);
+          let dna =
+            elem.data("dna") || this.href.substring(this.href.indexOf(":") + 1);
+          let promise = cache_items(dna);
+          // skip if already cached
+          if (promise.state() === "resolved") {
+            elem.attr("data-eveui-cached", 1);
+          } else {
+            preload_quota--;
+            promise.done(function () {
+              clearTimeout(preload_timer);
+              preload_timer = setTimeout(lazy_preload, eveui_preload_interval);
+            });
+            return false;
+          }
+        });
     }
   }
+
   function object_value(object, path) {
-    return path.split(".").reduce((value, key) => value?.[key], object);
+    let value = object;
+    $.each(path.split("."), function (index, key) {
+      value = value[key];
+    });
+    return value;
   }
-  const fetchData = async (url, method = "GET", data = null) => {
-    const headers = {
-      "Accept-Language": eveui_accept_language,
-      "Content-Type": "application/json",
+
+  function ajax(settings) {
+    let my_settings = {
+      headers: {
+        "Accept-Language": eveui_accept_language,
+      },
+      data: {
+        user_agent: eveui_user_agent,
+      },
     };
-  
-    const options = { method, headers };
-    if (data) options.body = JSON.stringify(data);
-  
-    try {
-      const response = await fetch(url, options);
-      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-      return await response.json();
-    } catch (error) {
-      console.error("Fetch error:", error);
-      throw error;
-    }
-  };
+    $.extend(true, my_settings, settings);
+    return $.ajax(my_settings);
+  }
+
   function cache_items(dna) {
-    // Caches all items required to process the specified fit
+    // caches all items required to process the specified fit
     let pending = [];
     let items = dna.split(":");
-  
-    for (let item of items) {
-      if (item.length === 0) {
+    for (let item in items) {
+      if (items[item].length === 0) {
         continue;
       }
-  
-      let match = item.split(";");
+      let match = items[item].split(";");
       let item_id = match[0];
-  
       if (item_id.endsWith("_")) {
         item_id = item_id.slice(0, -1);
       }
-  
       pending.push(cache_request("/universe/types/" + item_id));
     }
-  
-    return Promise.all(pending);
+    return $.when.apply(null, pending);
   }
-  const cache_request = async (key) => {
-    const url = eveui_esi_endpoint(`${key}/`);
-    if (eveui.cache[key]) return eveui.cache[key];
-  
-    try {
-      const data = await fetchData(url);
-      eveui.cache[key] = data;
-      return data;
-    } catch (error) {
-      console.error(`Error caching ${key}:`, error);
-      throw error;
+
+  function cache_request(key) {
+    let url;
+    let jsonp = false;
+    let custom_cache =
+      key.startsWith("/universe/types") ||
+      key.startsWith("/dogma/attributes");
+    url = eveui_esi_endpoint(key + "/");
+    key = (eveui_accept_language || navigator.languages[0]) + key;
+    let dataType = jsonp ? "jsonp" : "json";
+    if (typeof eveui.cache[key] === "object") {
+      if (typeof eveui.cache[key].promise === "function") {
+        // item is pending, return the existing deferred object
+        return eveui.cache[key];
+      } else {
+        // if item is already cached, we can return a resolved promise
+        return $.Deferred().resolve();
+      }
     }
-  };
+    if (errors_lastminute > 50) {
+      return $.Deferred().reject();
+    }
+    requests_pending++;
+    return (eveui.cache[key] = ajax({
+      url: url,
+      dataType: dataType,
+      cache: !custom_cache,
+    })
+      .done(function (data) {
+        data.path = key;
+        // store data in session cache
+        eveui.cache[key] = data;
+        if (db) {
+          // indexedDB is ready
+          // only manually cache keypaths where the data doesn't change until the server version changes
+          if (custom_cache) {
+            let tx = db.transaction("cache", "readwrite");
+            let store = tx.objectStore("cache");
+            store.put(data);
+          }
+        }
+      })
+      .fail((xhr) => {
+        // on a transient failed request, allow retry attempt on the same request after 10s
+        if (xhr.status >= 500) {
+          setTimeout(function () {
+            delete eveui.cache[key];
+          }, 10000);
+        }
+        // increment error count, decrement 1 minute later
+        errors_lastminute++;
+        if (errors_lastminute == 50) {
+          mark("too many errors in last 60s");
+        }
+        setTimeout(function () {
+          errors_lastminute--;
+        }, 60000);
+      })
+      .always(function () {
+        requests_pending--;
+      }));
+  }
+
   function cache_retrieve(key) {
-    let localizedKey = (eveui_accept_language || navigator.languages[0]) + key;
-    return eveui.cache[localizedKey];
+    key = (eveui_accept_language || navigator.languages[0]) + key;
+    return eveui.cache[key];
   }
+
   function market_retrieve(type_id) {
-    let marketPrices = cache_retrieve("/markets/prices");
-    return marketPrices.find(v => v.type_id == type_id) || null;
+    return $.grep(cache_retrieve("/markets/prices"), function (v) {
+      return v["type_id"] == type_id;
+    })[0];
   }
+
   function clipboard_copy(element) {
-    // Copy the contents of the selected element to the clipboard,
-    // excluding elements with 'nocopy' and including 'copyonly'.
-  
-    document.querySelectorAll(".nocopy").forEach(el => el.style.display = "none");
-    document.querySelectorAll(".copyonly").forEach(el => el.style.display = "block");
-  
+    // copy the contents of selected element to clipboard
+    // while excluding any elements with 'nocopy' class
+    // and including otherwise-invisible elements with 'copyonly' class
+    $(".nocopy").hide();
+    $(".copyonly").show();
     let selection = window.getSelection();
     let range = document.createRange();
-  
-    let startCopy = element.querySelector(".eveui_startcopy");
-    let endCopy = element.querySelector(".eveui_endcopy");
-  
-    if (startCopy && endCopy) {
-      range.setStart(startCopy, 0);
-      range.setEnd(endCopy, 0);
+    if (element.find(".eveui_startcopy").length) {
+      range.setStart(element.find(".eveui_startcopy")[0], 0);
+      range.setEnd(element.find(".eveui_endcopy")[0], 0);
     } else {
-      range.selectNodeContents(element);
+      range.selectNodeContents(element[0]);
     }
-  
     selection.removeAllRanges();
     selection.addRange(range);
     document.execCommand("copy");
     selection.removeAllRanges();
-  
-    document.querySelectorAll(".nocopy").forEach(el => el.style.display = "");
-    document.querySelectorAll(".copyonly").forEach(el => el.style.display = "none");
-  }
-  class EveUI {
-    static expand() {
-      // Expands anything marked for expansion or all if in expand_all mode
-      autoexpand();
-    
-      let expand_filter = "[data-eveui-expand]";
-      if (eveui_mode === "expand_all") {
-        expand_filter = "*";
-      }
-    
-      document.querySelectorAll(eveui_fit_selector)
-        .forEach(element => {
-          if (element.closest(".eveui_content")) return; // Prevent infinite loops
-    
-          let dna = element.getAttribute("data-dna") || element.href.substring(element.href.indexOf(":") + 1);
-    
-          cache_items(dna).then(() => {
-            let eveui_name = element.textContent.trim();
-            let eveui_content = document.createElement("span");
-            eveui_content.className = "eveui_content eveui_fit";
-            eveui_content.setAttribute("data-eveui-dna", dna);
-            eveui_content.innerHTML = format_fit(dna, eveui_name);
-    
-            element.replaceWith(eveui_content);
-            mark("fit window expanded");
-          });
-        });
-    
-      document.querySelectorAll(eveui_item_selector)
-        .forEach(element => {
-          if (element.closest(".eveui_content")) return; // Prevent infinite loops
-    
-          let item_id = element.getAttribute("data-itemid") || element.href.substring(element.href.indexOf(":") + 1);
-    
-          cache_request("/universe/types/" + item_id).then(() => {
-            let eveui_content = document.createElement("span");
-            eveui_content.className = "eveui_content eveui_item";
-            eveui_content.innerHTML = format_item(item_id);
-    
-            element.replaceWith(eveui_content);
-            mark("item window expanded");
-          });
-        });
-    
-      document.querySelectorAll(eveui_char_selector)
-        .forEach(element => {
-          if (element.closest(".eveui_content")) return; // Prevent infinite loops
-    
-          let char_id = element.getAttribute("data-charid") || element.href.substring(element.href.indexOf(":") + 1);
-    
-          cache_request("/characters/" + char_id).then(() => {
-            let eveui_content = document.createElement("span");
-            eveui_content.className = "eveui_content eveui_char";
-            eveui_content.innerHTML = format_char(char_id);
-    
-            element.replaceWith(eveui_content);
-            mark("char window expanded");
-          });
-        });
-    }
-    static format_fitstats(dna) {
-      return `
-        <span class="card shadow eveui_fit_stats text-body">
-          <dl>
-            <dt>Estimated Price</dt>
-            <dd>${formatMoney(calculate_fit_price(dna))}</dd>
-            <dt>Gun Damage</dt>
-            <dd>${format_number(calculate_gun_dps(dna), "DPS")}</dd>
-            <dt>Missile Damage</dt>
-            <dd>?</dd>
-            <dt>Drone Damage</dt>
-            <dd>?</dd>
-          </dl>
-        </span>`;
-    }
-    static corp_window(corp_id) {
-      let eveui_window = new_window("Corporation");
-      eveui_window.setAttribute("data-eveui-corpid", corp_id);
-      eveui_window.classList.add("corp_window");
-    
-      switch (eveui_mode) {
-        default:
-          document.body.appendChild(eveui_window);
-          break;
-      }
-    
-      mark("corp window created");
-    
-      // Load required corps and set callback to display
-      cache_request("/corporations/" + corp_id)
-        .then(() => {
-          let content = eveui_window.querySelector(".eveui_content");
-          if (content) {
-            content.innerHTML = format_corp(corp_id);
-          }
-          window.dispatchEvent(new Event("resize"));
-          mark("corp window populated");
-        })
-        .catch(() => {
-          eveui_window.remove();
-        });
-    
-      window.dispatchEvent(new Event("resize"));
-      return eveui_window;
-    }
-    static format_corp(corp_id) {
-      let corporation = cache_retrieve("/corporations/" + corp_id);
-    
-      return `
-        <div class="container-fluid">
-          <figure class="figure">
-            <figcaption class="figure-caption">
-              <hr/>
-              ${corporation.name}
-              <hr />
-            </figcaption>
-            <img src="${eveui_imageserver("corporations/" + corp_id + "/logo?size=256")}" 
-                 class="img-fluid border rounded figure-img"/>
-            <hr />
-          </figure>
-          <table class="table">
-            <tr>
-              <td>
-                <img class="float_left" 
-                     src="${eveui_imageserver("alliances/" + corporation.alliance_id + "/logo?size=128")}" 
-                     height="128" width="128" />
-                Member of
-                <eveui key="/alliances/${corporation.alliance_id}" path="name">
-                  ${corporation.alliance_id}
-                </eveui>
-              </td>
-            </tr>
-            <tr>
-              <td>Bio:</td>
-              <td>
-                ${corporation.description.replace(/<font[^>]+>/g, "<font>")}
-              </td>
-            </tr>
-          </table>
-        </div>`;
-    }
-    static char_window(char_id) {
-      let eveui_window = new_window("Character");
-      eveui_window.setAttribute("data-eveui-charid", char_id);
-      eveui_window.classList.add("char_window");
-    
-      switch (eveui_mode) {
-        default:
-          document.body.appendChild(eveui_window);
-          break;
-      }
-    
-      mark("char window created");
-    
-      // Load required characters and set callback to display
-      cache_request("/characters/" + char_id)
-        .then(() => {
-          let content = eveui_window.querySelector(".eveui_content");
-          if (content) {
-            content.innerHTML = format_char(char_id);
-          }
-          window.dispatchEvent(new Event("resize"));
-          mark("char window populated");
-        })
-        .catch(() => {
-          eveui_window.remove();
-        });
-    
-      window.dispatchEvent(new Event("resize"));
-      return eveui_window;
-    }
+    $(".nocopy").show();
+    $(".copyonly").hide();
   }
   mark("script end");
 })(eveui || (eveui = {}));
