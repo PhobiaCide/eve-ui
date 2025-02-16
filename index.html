@@ -7,42 +7,58 @@
 
     <meta charset="UTF-8">
 
+    <!-- Halfmoon CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/halfmoon@2.0.1/css/halfmoon.min.css"
+      rel="stylesheet"
+      crossorigin="anonymous"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/halfmoon@2.0.1/css/cores/halfmoon.modern.css"
+      rel="stylesheet"
+      crossorigin="anonymous"
+    />
+
+    <!-- Topcoat UI Styles -->
+    <link
+      id="topcoat-stylesheet"
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/topcoat/0.8.0/css/topcoat-desktop-dark.min.css"
+    />
     <link rel="stylesheet" type="text/css" href="eve-ui.css" />
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"
       integrity="sha384-nvAa0+6Qg9clwYCGGPpDQLVpLNn0fRaROjHqs13t4Ggj3Ez50XnGQqc/r8MhnRDZ"
       crossorigin="anonymous"></script>
 
     <style>
+        * {
+            max-width: 100%;
+        }
         body {
-            font-family: fragma;
+            font-family: fragma !important;
+        }
+        h1, h2, h3, h4, h5, h6, header {
+            font-family: evesansneue-regular !important;
         }
     </style>
 
 </head>
 
-<body>
-    <header>
-        <br />
-        <figure>
-            <a href="https://github.com/PhobiaCide/eve-ui/">
-                GitHub
-            </a>
-        </figure>
-        <br />
-    </header>
-    <br />
-    <hr />
-    <br />
-    <main>
-        <ul>
-            <li>
-                <figure>
+<body data-bs-theme="dark" data-bs-core="modern" class="ps-md-sbwidth text-wrap">
+    <aside class="sidebar">
+        <header>     
+                <a href="https://github.com/PhobiaCide/eve-ui/">
+                    GitHub
+        </header>
+        <hr />
+        <ul class="topcoat--list__container">
+            <li class="topcoat--list__item">
                     <a href="fitting:670::" data-title="aka capsule">
                         Pod
                     </a>
-                </figure>
+           
             </li>
-            <li>
+            <li class="topcoat--list__item">
                 <details>
                     <summary>Vindicator</summary>
                     <figure>
@@ -53,19 +69,19 @@
                     </figure>
                 </details>
             </li>
-            <li>
+            <li class="topcoat--list__item">
                 <article
                   data-dna="17740:2048;1:2281;2:26442;1:12791;16560:10190;4:19215;1:26448;2:33681;1:3186;7:12787;3248:12084;1:2446;1:17559;1:1999;2::">
                     Vindicator
                 </article>
             </li>
-            <li>
+            <li class="topcoat--list__item">
                 <article
                   data-dna="24694:2048;1:3841;1:26082;1:519;3:26088;2:2281;2:1355;1:35662;1:19215;1:2961;7:1978;1:2488;5:2185;5:12761;1337:21894;1337:28999;1:29001;1::">
                     Some ship
                 </article>
             </li>
-            <li>
+            <li class="topcoat--list__item">
                 <article>
                     <a href="#"
                       data-dna="11985:2048;1:1541;1:3841;1:2281;1:19215;1:12058;1:2301;1:3608;4:16487;2:31360;1:31796;1:28201;5::">
@@ -73,56 +89,60 @@
                     </a>
                 </article>
             </li>
-            <li>
+            <li class="topcoat--list__item">
                 <article>
                     <a href="char:2113672280">
                         Andrew Amason
                     </a>
                 </article>
             </li>
-            <li>
+            <li class="topcoat--list__item">
                 <article>
                     <a href="char:2114764809">
                         PhobiaCide
                     </a>
                 </article>
             </li>
-            <li>
+            <li class="topcoat--list__item">
                 <article>
                     <a href="char:145123391">
                         Cmdr Jameson
                     </a>
                 </article>
             </li>
-            <li>
+            <li class="topcoat--list__item">
                 <article>
                     <a href="char:660693787">
                         Braellor
                     </a>
                 </article>
             </li>
-            <li>
+            <li class="topcoat--list__item">
                 <article>
-                    <a href="item:11567">
+                    <a href="showinfo:11567">
                         Avatar
                     </a>
                 </article>
             </li>
-            <li>
+            <li class="topcoat--list__item">
                 <article>
-                    <a href="item:17740">
+                    <a href="showinfo:17740">
                         Vindicator
                     </a>
                 </article>
             </li>
-            <li>
+            <li class="topcoat--list__item">
                 <article>
-                    <a href="item:33475">
+                    <a href="showinfo:33475">
                         MTU
                     </a>
                 </article>
             </li>
         </ul>
+    </aside>
+
+    <main>
+
     </main>
     <footer></footer>
 
