@@ -102,7 +102,7 @@ header {
   max-width: 350px;
   font-size: 16px;
   border-radius: 2px;
-  border-image: url("borders/window_border.png") 8 repeat;
+  border-image: url("../../assets/img/borders/window_border.png") 8 repeat;
   outline-width: 2px;
 	outline-offset: -1px;
 	outline-color: rgb(192, 192, 192);

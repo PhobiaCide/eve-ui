@@ -12,27 +12,75 @@ const eveui_fit_selector = `[href^="fitting:"],[data-dna]`;
 const eveui_item_selector = `[href^="showinfo:"],[data-itemid]`;
 const eveui_char_selector = `[href^="char:"],[data-charid]`;
 const eveui_corp_selector = `[href^="corp:"],[data-corpid]`;
-const eveui_esi_endpoint = (path) => `https://esi.evetech.net/latest${path}?datasource=tranquility`;
+const eveui_esi_endpoint = (path) =>
+  `https://esi.evetech.net/latest${path}?datasource=tranquility`;
 const eveui_urlify = (dna) => `fitting:${encodeURI(dna)}`;
 const eveui_imageserver = (image_ref) =>
   `https://images.evetech.net/${encodeURI(image_ref)}`;
 
 class Utility {
   static toTitleCase(str) {
-    return str
-      // Convert camelCase to space-separated words
-      .replace(/([a-z])([A-Z])/g, '$1 $2')
-      // Convert all words to title case
-      .replace(/\b\w/g, (char) => char.toUpperCase());
+    return (
+      str
+        // Convert camelCase to space-separated words
+        .replace(/([a-z])([A-Z])/g, "$1 $2")
+        // Convert all words to title case
+        .replace(/\b\w/g, (char) => char.toUpperCase())
+    );
   }
   static async getImgHref(id, size) {
-    console.log(await ajax({
-      url: eveui_esi_endpoint(`/universe/names/`),
-      method: "POST",
-      payload: JSON.stringify([id]),
-      cache: true,
-      contentType: "application/json"
-    }));
+    console.log(
+      await ajax({
+        url: eveui_esi_endpoint(`/universe/names/`),
+        method: "POST",
+        payload: JSON.stringify([id]),
+        cache: true,
+        contentType: "application/json",
+      })
+    );
+  }
+  static formatEveOnlineMarkup(text) {
+    console.log(text);
+    return (
+      text
+        // Convert Unicode escape sequences (\uXXXX → actual characters)
+        .replace(/\\u([\dA-Fa-f]{4})/g, (_, hex) =>
+          String.fromCharCode(parseInt(hex, 16))
+        )
+
+        // Convert <font> tags to <span> with styles
+        .replace(/<font([^>]*)>(.*?)<\/font>/gi, (match, attrs, text) => {
+          // Extract size and color attributes
+          let sizeMatch = attrs.match(/size=["']?(\d+)["']?/i);
+          let colorMatch = attrs.match(/color=["']?#?([A-Fa-f0-9]{3,8})["']?/i);
+
+          // Map font sizes (1-7) to reasonable px values
+          const sizeMapping = {
+            1: "10px",
+            2: "12px",
+            3: "14px",
+            4: "16px",
+            5: "18px",
+            6: "20px",
+            7: "22px",
+          };
+          let size = sizeMatch
+            ? sizeMapping[sizeMatch[1]] || "16px"
+            : "inherit";
+
+          // Ensure color is valid (strip extra alpha/characters if needed)
+          let color = colorMatch ? `#${colorMatch[1].slice(0, 6)}` : "inherit";
+
+          // Avoid empty <span> elements
+          if (!text.trim()) return "";
+
+          // Return styled span instead of font tag
+          return `<span style="font-size: ${size}; color: ${color}; white-space: pre-wrap;">${text}</span>`;
+        })
+
+        // Preserve line breaks (`\n` → `<br>`)
+        .replace(/\r?\n/g, "<br>")
+    );
   }
 }
 
@@ -72,14 +120,14 @@ let eveui;
       }
     }
   });
-
   document.addEventListener("click", function (e) {
     if (e.target.matches(".eveui_modal_overlay")) {
-      document.querySelectorAll(".eveui_window").forEach(window => window.remove());
+      document
+        .querySelectorAll(".eveui_window")
+        .forEach((window) => window.remove());
       e.target.remove();
     }
   });
-
   document.addEventListener("click", function (e) {
     if (e.target.matches(eveui_fit_selector)) {
       e.preventDefault();
@@ -91,8 +139,11 @@ let eveui;
         return;
       }
 
-      let dna = e.target.getAttribute("data-dna") || e.target.href.substring(e.target.href.indexOf(":") + 1);
-      let eveui_name = e.target.getAttribute("data-title") || e.target.textContent.trim();
+      let dna =
+        e.target.getAttribute("data-dna") ||
+        e.target.href.substring(e.target.href.indexOf(":") + 1);
+      let eveui_name =
+        e.target.getAttribute("data-title") || e.target.textContent.trim();
 
       switch (eveui_mode) {
         case "expand":
@@ -106,7 +157,6 @@ let eveui;
       }
     }
   });
-
   document.addEventListener("click", function (e) {
     if (e.target.matches(eveui_item_selector)) {
       e.preventDefault();
@@ -117,7 +167,9 @@ let eveui;
         return;
       }
 
-      let item_id = e.target.getAttribute("data-itemid") || e.target.href.substring(e.target.href.indexOf(":") + 1);
+      let item_id =
+        e.target.getAttribute("data-itemid") ||
+        e.target.href.substring(e.target.href.indexOf(":") + 1);
 
       // Create loading placeholder
       switch (eveui_mode) {
@@ -132,10 +184,10 @@ let eveui;
       }
     }
   });
-
   document.addEventListener("click", function (e) {
     if (e.target.matches(eveui_char_selector)) {
       e.preventDefault();
+      console.log("character link clicked!")
 
       // Hide window if it already exists
       if (e.target.eveui_window && document.contains(e.target.eveui_window)) {
@@ -143,7 +195,9 @@ let eveui;
         return;
       }
 
-      let char_id = e.target.getAttribute("data-charid") || e.target.href.substring(e.target.href.indexOf(":") + 1);
+      let char_id =
+        e.target.getAttribute("data-charid") ||
+        e.target.href.substring(e.target.href.indexOf(":") + 1);
 
       // Create loading placeholder
       switch (eveui_mode) {
@@ -158,9 +212,10 @@ let eveui;
       }
     }
   });
-
   document.addEventListener("click", function (e) {
+    
     if (e.target.matches(eveui_corp_selector)) {
+      console.log("corp link clicked!");
       e.preventDefault();
 
       // Hide window if it already exists
@@ -169,7 +224,9 @@ let eveui;
         return;
       }
 
-      let corp_id = e.target.getAttribute("data-corpid") || e.target.href.substring(e.target.href.indexOf(":") + 1);
+      let corp_id =
+        e.target.getAttribute("data-corpid") ||
+        e.target.href.substring(e.target.href.indexOf(":") + 1);
 
       // Create loading placeholder
       switch (eveui_mode) {
@@ -184,7 +241,6 @@ let eveui;
       }
     }
   });
-
   // info buttons, copy buttons, etc
   document.addEventListener("click", function (e) {
     if (e.target.matches(".eveui_minus_icon")) {
@@ -214,7 +270,9 @@ let eveui;
       dnaElement.setAttribute("data-eveui-dna", dna);
 
       cache_items(dna).then(() => {
-        let eveui_window = document.querySelector(`.eveui_window[data-eveui-dna="${dna}"]`);
+        let eveui_window = document.querySelector(
+          `.eveui_window[data-eveui-dna="${dna}"]`
+        );
         if (eveui_window) {
           let content = eveui_window.querySelector(".eveui_content");
           if (content) {
@@ -225,7 +283,6 @@ let eveui;
       });
     }
   });
-
   document.addEventListener("click", function (e) {
     if (e.target.matches(".eveui_plus_icon")) {
       e.preventDefault();
@@ -250,7 +307,9 @@ let eveui;
       dnaElement.setAttribute("data-eveui-dna", dna);
 
       cache_items(dna).then(() => {
-        let eveui_window = document.querySelector(`.eveui_window[data-eveui-dna="${dna}"]`);
+        let eveui_window = document.querySelector(
+          `.eveui_window[data-eveui-dna="${dna}"]`
+        );
         if (eveui_window) {
           let content = eveui_window.querySelector(".eveui_content");
           if (content) {
@@ -261,7 +320,6 @@ let eveui;
       });
     }
   });
-
   document.addEventListener("click", function (e) {
     if (e.target.matches(".eveui_edit_icon")) {
       e.preventDefault();
@@ -284,12 +342,17 @@ let eveui;
       let item_id = itemElement.getAttribute("data-eveui-itemid");
 
       // Hide window if it already exists
-      if (e.target.eveui_itemselect && document.contains(e.target.eveui_itemselect)) {
+      if (
+        e.target.eveui_itemselect &&
+        document.contains(e.target.eveui_itemselect)
+      ) {
         e.target.eveui_itemselect.remove();
         return;
       }
 
-      document.querySelectorAll(".eveui_itemselect").forEach(el => el.remove());
+      document
+        .querySelectorAll(".eveui_itemselect")
+        .forEach((el) => el.remove());
 
       let rowContent = itemElement.querySelector(".eveui_rowcontent");
       if (!rowContent) return;
@@ -348,7 +411,6 @@ let eveui;
       });
     }
   });
-
   document.addEventListener("input", function (e) {
     if (e.target.matches(".eveui_itemselect input")) {
       let eveui_itemselect = e.target.closest(".eveui_itemselect");
@@ -363,7 +425,9 @@ let eveui;
 
         if (!dnaElement) return;
 
-        let item_id = itemElement ? itemElement.getAttribute("data-eveui-itemid") : undefined;
+        let item_id = itemElement
+          ? itemElement.getAttribute("data-eveui-itemid")
+          : undefined;
         let dna = dnaElement.getAttribute("data-eveui-dna");
 
         if (typeof item_id === "undefined") {
@@ -381,7 +445,9 @@ let eveui;
         dnaElement.setAttribute("data-eveui-dna", dna);
 
         cache_items(dna).then(() => {
-          let eveui_window = document.querySelector(`.eveui_window[data-eveui-dna="${dna}"]`);
+          let eveui_window = document.querySelector(
+            `.eveui_window[data-eveui-dna="${dna}"]`
+          );
           if (eveui_window) {
             let content = eveui_window.querySelector(".eveui_content");
             if (content) {
@@ -391,7 +457,9 @@ let eveui;
           window.dispatchEvent(new Event("resize"));
         });
 
-        document.querySelectorAll(".eveui_itemselect").forEach(el => el.remove());
+        document
+          .querySelectorAll(".eveui_itemselect")
+          .forEach((el) => el.remove());
       } else {
         // Search for matching items
         if (input_str.length < 3) return;
@@ -406,7 +474,7 @@ let eveui;
             search: e.target.value,
             categories: "inventorytype",
           },
-        }).then(data => {
+        }).then((data) => {
           if (!data.inventorytype) return;
 
           // Get names for required item ids
@@ -416,7 +484,7 @@ let eveui;
             method: "POST",
             contentType: "application/json",
             data: JSON.stringify({ ids: data.inventorytype.slice(0, 50) }),
-          }).then(data => {
+          }).then((data) => {
             if (request_timestamp > itemselect_lastupdate) {
               itemselect_lastupdate = request_timestamp;
             } else {
@@ -439,15 +507,13 @@ let eveui;
       }
     }
   });
-
   // close itemselect window on any outside click
   document.addEventListener("click", function (e) {
     if (e.target.closest(".eveui_itemselect, .eveui_more_icon")) {
       return;
     }
-    document.querySelectorAll(".eveui_itemselect").forEach(el => el.remove());
+    document.querySelectorAll(".eveui_itemselect").forEach((el) => el.remove());
   });
-
   document.addEventListener("click", function (e) {
     if (e.target.matches(".eveui_copy_icon")) {
       let contentElement = e.target.closest(".eveui_content");
@@ -456,14 +522,12 @@ let eveui;
       }
     }
   });
-
   // custom window drag handlers
   document.addEventListener("mousedown", function (e) {
     if (e.target.matches(".eveui_window")) {
       e.target.style.zIndex = current_zindex++;
     }
   });
-
   $(document).on("mousedown", ".eveui_title", function (e) {
     e.preventDefault();
     drag_element = $(this).parent();
@@ -541,7 +605,7 @@ let eveui;
               db.deleteObjectStore("cache");
             }
             db.createObjectStore("cache", {
-              keyPath: "path"
+              keyPath: "path",
             });
           };
           open.onsuccess = function () {
@@ -624,8 +688,9 @@ let eveui;
     ship.medSlots = 0;
     ship.lowSlots = 0;
     for (let i in ship.dogma_attributes) {
-      let attr = cache_retrieve("/universe/types/" + ship_id)
-        .dogma_attributes[i];
+      let attr = cache_retrieve("/universe/types/" + ship_id).dogma_attributes[
+        i
+      ];
       switch (attr.attribute_id) {
         case 14: // hiSlots
           ship.hiSlots = attr.value;
@@ -714,18 +779,22 @@ let eveui;
         }
         html += `<tr class="nocopy" data-eveui-itemid="${item_id}"><td><img src="${eveui_imageserver(
           "types/" + item_id + "/icon?size=64"
-        )}" class="eveui_icon eveui_item_icon" /><td class="eveui_right">${fittings[item_id]
-          }<td colspan="2"><div class="eveui_rowcontent">${item.name
-          }</div><td class="eveui_right whitespace_nowrap"><span data-itemid="${item_id}" class="eveui_icon eveui_info_icon" /><span class="eveui_icon eveui_plus_icon eveui_edit" /><span class="eveui_icon eveui_minus_icon eveui_edit" /><span class="eveui_icon eveui_more_icon eveui_edit" />`;
+        )}" class="eveui_icon eveui_item_icon" /><td class="eveui_right">${
+          fittings[item_id]
+        }<td colspan="2"><div class="eveui_rowcontent">${
+          item.name
+        }</div><td class="eveui_right whitespace_nowrap"><span data-itemid="${item_id}" class="eveui_icon eveui_info_icon" /><span class="eveui_icon eveui_plus_icon eveui_edit" /><span class="eveui_icon eveui_minus_icon eveui_edit" /><span class="eveui_icon eveui_more_icon eveui_edit" />`;
       }
       if (typeof slots_available !== "undefined") {
         if (slots_available > slots_used) {
-          html += `<tr class="nocopy"><td class="eveui_icon eveui_item_icon" /><td class="eveui_right whitespace_nowrap">${slots_available - slots_used
-            }<td colspan="2"><div class="eveui_rowcontent">Empty</div><td class="eveui_right"><span class="eveui_icon eveui_more_icon eveui_edit" />`;
+          html += `<tr class="nocopy"><td class="eveui_icon eveui_item_icon" /><td class="eveui_right whitespace_nowrap">${
+            slots_available - slots_used
+          }<td colspan="2"><div class="eveui_rowcontent">Empty</div><td class="eveui_right"><span class="eveui_icon eveui_more_icon eveui_edit" />`;
         }
         if (slots_used > slots_available) {
-          html += `<tr class="nocopy"><td class="eveui_icon eveui_item_icon" /><td class="eveui_right">${slots_available - slots_used
-            }<td><div class="eveui_rowcontent">Excess</div>`;
+          html += `<tr class="nocopy"><td class="eveui_icon eveui_item_icon" /><td class="eveui_right">${
+            slots_available - slots_used
+          }<td><div class="eveui_rowcontent">Excess</div>`;
         }
       }
       return html;
@@ -739,8 +808,8 @@ let eveui;
       <tr class="eveui_fit_header" data-eveui-itemid="${ship_id}">
         <td colspan="2">
           <img src="${eveui_imageserver(
-      "types/" + ship_id + "/render?size=512"
-    )}" class="eveui_icon eveui_ship_icon" />
+            "types/" + ship_id + "/render?size=512"
+          )}" class="eveui_icon eveui_ship_icon" />
         </td>
         <td>
           <div class="eveui_rowcontent">
@@ -754,10 +823,11 @@ let eveui;
           </div>
         </td>
         <td class="eveui_right whitespace_nowrap nocopy" colspan="2">
-          ${eveui_allow_edit
-        ? '<span class="eveui_icon eveui_edit_icon"></span>'
-        : ""
-      }
+          ${
+            eveui_allow_edit
+              ? '<span class="eveui_icon eveui_edit_icon"></span>'
+              : ""
+          }
           <span class="eveui_icon eveui_copy_icon"</span>
           <span data-itemid="${ship_id}" class="eveui_icon eveui_info_icon"></span>
           <span class="eveui_icon eveui_edit"></span>
@@ -838,11 +908,15 @@ let eveui;
       ${item.name}
       </h3>
       </figcaption>
-  <img src="${eveui_imageserver("types/" + item_id + "/render?size=512")}" class="figure-img img-fluid rounded" />
+  <img src="${eveui_imageserver(
+    "types/" + item_id + "/render?size=512"
+  )}" class="figure-img img-fluid rounded" />
   </figure>
   <dl>
     <dt>Estimated price</dt>
-    <dd class="text-end">Ƶ${format_number(market_retrieve(item_id).average_price)}</dd>
+    <dd class="text-end">Ƶ${format_number(
+      market_retrieve(item_id).average_price
+    )}</dd>
 </dl>
   </header>
   <div class="card-body text-wrap">
@@ -856,7 +930,9 @@ let eveui;
       html += `
     
       <dt>
-        <eveui key="/dogma/attributes/${attr.attribute_id}" path="display_name,name">
+        <eveui key="/dogma/attributes/${
+          attr.attribute_id
+        }" path="display_name,name">
           attribute:${attr.attribute_id}
         </eveui>
       </dt>
@@ -907,8 +983,8 @@ let eveui;
  
   
           <img src="${eveui_imageserver(
-      "characters/" + char_id + "/portrait?size=512"
-    )}" class="img-fluid img-rounded figure-img"/>
+            "characters/" + char_id + "/portrait?size=512"
+          )}" class="img-fluid img-rounded figure-img"/>
      
  </figure>
       <hr />
@@ -924,15 +1000,14 @@ let eveui;
         <figcaption class="figure-caption">
                   
           <a href="corp:${character.corporation_id}">
-            <eveui key="/corporations/${character.corporation_id
-      }" path="name">
+            <eveui key="/corporations/${character.corporation_id}" path="name">
               ${character.corporation_id}
             </eveui>
           </a>
           </figcaption>
           <img  class="border figure-img img-fluid rounded" src="${eveui_imageserver(
-        "corporations/" + character.corporation_id + "/logo?size=128"
-      )}" height="96" width="96" />
+            "corporations/" + character.corporation_id + "/logo?size=128"
+          )}" height="96" width="96" />
           </figure>
         </td>
        
@@ -943,7 +1018,7 @@ let eveui;
           Bio:&nbsp;
         </td>
         <td style="text-align:left;">
-          ${character.description.replace(/<font[^>]+>/g, "<font>")}
+          ${Utility.formatEveOnlineMarkup(character.description)}
         </td>
       </tr>
     </tbody>
@@ -988,16 +1063,16 @@ let eveui;
         <hr />
 </figcaption>
           <img src="${eveui_imageserver(
-      "corporations/" + corp_id + "/logo?size=256"
-    )}" class="img-fluid border rounded figure-img"/>
+            "corporations/" + corp_id + "/logo?size=256"
+          )}" class="img-fluid border rounded figure-img"/>
           <hr />
  </figure>
           <table class="table">
     <tr>
       <td>
         <img class="float_left" src="${eveui_imageserver(
-      "alliances/" + corporation.alliance_id + "/logo?size=128"
-    )}" height="128" width="128" />
+          "alliances/" + corporation.alliance_id + "/logo?size=128"
+        )}" height="128" width="128" />
         Member of
         <eveui key="/alliances/${corporation.alliance_id}" path="name">
   ${corporation.alliance_id}
@@ -1185,7 +1260,9 @@ let eveui;
     }
 
     // Remove .00 if it's a whole number
-    const formattedNum = Number.isInteger(num) ? num.toFixed(0) : num.toFixed(2);
+    const formattedNum = Number.isInteger(num)
+      ? num.toFixed(0)
+      : num.toFixed(2);
 
     return `${formattedNum} ${suffix} ${units}`.trim();
   }
@@ -1377,8 +1454,7 @@ let eveui;
     let url;
     let jsonp = false;
     let custom_cache =
-      key.startsWith("/universe/types") ||
-      key.startsWith("/dogma/attributes");
+      key.startsWith("/universe/types") || key.startsWith("/dogma/attributes");
     url = eveui_esi_endpoint(key + "/");
     key = (eveui_accept_language || navigator.languages[0]) + key;
     let dataType = jsonp ? "jsonp" : "json";
